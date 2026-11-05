@@ -59,6 +59,8 @@ Reglas:
 - BUSCAR debe ser una copia exacta de líneas consecutivas del archivo, con su sangría y SIN los \
 números de línea ni el separador " | ".
 - Incluye en BUSCAR las líneas justas para que el texto aparezca una sola vez en el archivo.
+- Usa un bloque por cada lugar que cambias: no juntes en un mismo BUSCAR líneas de partes distintas \
+del archivo (por ejemplo, un import y una función).
 - REEMPLAZAR debe quedar completo y con la sangría correcta; no abrevies con "...".
 - Si necesitas un import nuevo, agrégalo con otro bloque."""
 
@@ -134,7 +136,7 @@ def seccion_codigo(repo: Path, regiones: list, maximo: int = MAX_CHARS_CODIGO) -
         if archivo not in con_imports:
             imports = _imports(repo, archivo)
             if imports and len(imports) + len(texto) <= restante:
-                titulo += f"\nImports del archivo:\n{imports}\n"
+                titulo += f"\nImports del archivo (puede haber otras líneas entre ellos):\n{imports}\n"
                 con_imports.add(archivo)
         nombre = f" :: {r['funcion']}" if r.get("funcion") else ""
         cola = f"\n... (región recortada; continúa hasta la línea {fin})" if cortada else ""

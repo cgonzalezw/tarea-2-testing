@@ -112,13 +112,20 @@ def _coincidencias(lineas: list, buscar: list, normalizar) -> list:
     return [i for i in range(len(lineas) - n + 1) if normalizadas[i:i + n] == objetivo]
 
 
-def _parecidas(lineas: list, buscar: list) -> str:
-    """Líneas reales más parecidas a la primera buscada, para orientar al modelo en el reintento."""
-    primera = next((l.strip() for l in buscar if l.strip()), "")
+def _diagnostico(lineas: list, buscar: list) -> str:
+    """Explica al modelo por qué BUSCAR no coincide y le muestra el texto real del archivo."""
     limpias = [l.strip() for l in lineas]
-    cercanas = difflib.get_close_matches(primera, limpias, n=3, cutoff=0.6)
-    filas = [f"  {limpias.index(c) + 1} | {lineas[limpias.index(c)]}" for c in cercanas]
-    return "\nLíneas parecidas en el archivo:\n" + "\n".join(filas) if filas else ""
+    faltantes = [l.strip() for l in buscar if l.strip() and l.strip() not in limpias]
+    if not faltantes:
+        return ("\nTodas las líneas de BUSCAR existen, pero no son consecutivas en el archivo. "
+                "Usa un bloque separado para cada lugar que cambias.")
+    texto = f"\nEsta línea de BUSCAR no existe en el archivo:\n  {faltantes[0]}"
+    cercanas = difflib.get_close_matches(faltantes[0], limpias, n=1, cutoff=0.5)
+    if cercanas:
+        i = limpias.index(cercanas[0])
+        zona = range(max(0, i - 2), min(len(lineas), i + 4))
+        texto += "\nTexto real de la zona más parecida:\n" + "\n".join(f"  {n + 1} | {lineas[n]}" for n in zona)
+    return texto
 
 
 def _aplicar_una(lineas: list, edicion: Edicion, rangos: list) -> list:
@@ -143,7 +150,7 @@ def _aplicar_una(lineas: list, edicion: Edicion, rangos: list) -> list:
         nuevas = _reindentar(reemplazar, buscar, halladas) if reindentar else reemplazar
         return lineas[:p] + nuevas + lineas[p + len(buscar):]
     raise ErrorEdicion(f"{edicion.archivo}: BUSCAR no coincide con el archivo; copia las líneas "
-                       f"tal como están, sin los números de línea.{_parecidas(lineas, buscar)}")
+                       f"tal como están, sin los números de línea.{_diagnostico(lineas, buscar)}")
 
 
 # ---------------------------------------------------------------- preparar y validar

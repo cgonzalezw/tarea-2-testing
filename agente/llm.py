@@ -23,7 +23,7 @@ MODELO = "gemini-3.5-flash-lite"
 MAX_INTENTOS = 6           # intentos por llamada (incluye el primero)
 ESPERA_BASE = 2.0          # segundos; se duplica en cada reintento
 TIMEOUT_LLAMADA = 60.0     # segundos máximos esperando una respuesta
-MARGEN = 5.0               # no iniciar una llamada si queda menos que esto
+MARGEN = 11.0              # no iniciar una llamada si queda menos: la API rechaza plazos menores a 10 s
 CODIGOS_TEMPORALES = {408, 429, 500, 502, 503, 504}
 
 metricas = {"llamadas": 0, "tokens_entrada": 0, "tokens_salida": 0}

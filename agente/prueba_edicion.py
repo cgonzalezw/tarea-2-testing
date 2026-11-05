@@ -128,6 +128,14 @@ class Aplicacion(Base):
         with self.assertRaisesRegex(ErrorEdicion, r"(?s)no coincide.*5 \|     return a - b"):
             self.preparar(bloque("    return a - c", "    return a + c"))
 
+    def test_no_coincide_dice_que_linea_no_existe(self):
+        with self.assertRaisesRegex(ErrorEdicion, r"(?s)no existe en el archivo:\n  return a - c.*Texto real"):
+            self.preparar(bloque("def suma(a, b):\n    return a - c", "def suma(a, b):\n    return a + c"))
+
+    def test_lineas_que_existen_pero_no_son_consecutivas(self):
+        with self.assertRaisesRegex(ErrorEdicion, "no son consecutivas"):
+            self.preparar(bloque("import os\ndef suma(a, b):", "import sys\ndef suma(a, b):"))
+
     def test_sin_cambios(self):
         with self.assertRaisesRegex(ErrorEdicion, "no cambian nada"):
             self.preparar(bloque("import os", "import os"))

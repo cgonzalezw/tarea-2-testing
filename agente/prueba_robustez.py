@@ -67,6 +67,8 @@ class ClienteFalso:
     def generate_content(self, model, contents, config):
         self.recibidas += 1
         e = self.escenario
+        if config.http_options.timeout < 10000:   # igual que la API real
+            raise ErrorApi(400)
         es_localizador = '"ranking"' in contents
         if e == "429_y_luego_ok" and self.recibidas <= 2:
             raise ErrorApi(429)
@@ -181,11 +183,19 @@ class Robustez(unittest.TestCase):
 
     def test_localizador_saturado_no_le_quita_el_tiempo_al_reparador(self):
         # Sin plazo, los reintentos con espera creciente tomarían más de 60 s.
-        self.correr("localizador_saturado", ESPERA_BASE="2", PLAZO_LLM="10")
+        self.correr("localizador_saturado", ESPERA_BASE="2", PLAZO_LLM="14")
         m = self.comprobar_json()
         self.assertTrue(self.reparado())
         self.assertLess(m["segundos"], 25)
         self.assertEqual(m["llamadas"], 1)
+
+    def test_plazo_corto_no_llega_a_la_api(self):
+        # Con menos de 11 s disponibles no se llama: la API respondería 400 y se perdería el intento.
+        self.correr("ok", PLAZO_LLM="6")
+        m = self.comprobar_json()
+        self.assertEqual(m["llamadas"], 1)
+        self.assertNotIn("no recuperable", self.salida)
+        self.assertTrue(self.reparado())
 
     def test_key_invalida_no_reintenta_en_vano(self):
         self.correr("key_invalida")
