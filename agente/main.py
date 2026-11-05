@@ -2,7 +2,7 @@
 
 Uso (el entorno del bug debe estar instalado con setup.sh):
     python main.py <carpeta_del_bug>
-    python main.py ../dataset/black-2
+    python main.py ../dataset/<proyecto>-<n>
 
 Flujo: localizar -> reparar -> escribir localizacion.json y metricas.json en <carpeta_del_bug>/.
 La reparación queda aplicada en <carpeta_del_bug>/repo/, que es lo que se evalúa.
@@ -25,7 +25,7 @@ import ejecutor
 import llm
 import tiempo
 from localizador import localizar, region_de_respaldo
-from reparador import reparar
+from reparador import dejar_mejor_candidato, reparar
 
 _escritura = threading.Lock()
 _estado = {"carpeta": None, "info": None, "localizacion": None, "terminado": False}
@@ -57,6 +57,10 @@ def cortar(motivo: str) -> None:
     """Termina el agente de inmediato dejando los resultados escritos."""
     print(f"[main] corte: {motivo} ({tiempo.transcurrido():.1f}s)", flush=True)
     ejecutor.matar_todos()
+    try:
+        dejar_mejor_candidato()
+    except Exception:
+        traceback.print_exc()
     escribir_resultados()
     os._exit(0)
 

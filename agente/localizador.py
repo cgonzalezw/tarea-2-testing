@@ -10,7 +10,7 @@ Recibe:
 Devuelve un dict con, al menos, este formato (se guarda como localizacion.json y se evalúa):
   {
     "regiones": [
-      {"archivo": "black.py", "inicio": 120, "fin": 145}
+      {"archivo": "paquete/modulo.py", "inicio": 120, "fin": 145}
     ]
   }
   - archivo: ruta relativa a repo/, de un archivo de código fuente (no de test)
@@ -51,6 +51,7 @@ MAX_CHARS_SALIDA = 5000     # salida de tests en el prompt
 MAX_CHARS_TEST = 4000       # código de tests en el prompt
 MAX_CHARS_CANDIDATOS = 18000
 LINEAS_POR_CANDIDATO = 25
+PLAZO_LLM = 30.0            # reordenar es opcional: si la API está saturada, el tiempo es del reparador
 # Palabras de nombres de test que no dicen nada sobre dónde está el bug.
 PALABRAS_GENERICAS = {"test", "tests", "get", "set", "the", "and", "for", "with", "without", "not",
                       "error", "errors", "none", "should", "works", "case", "basic", "simple"}
@@ -149,7 +150,7 @@ def identificadores_de_tests(tests_codigo: list) -> tuple:
 
 def _archivo_de_modulo(repo: Path, modulo: str):
     # Se compara con los archivos que conoce git (no con el disco): en macOS el disco no distingue
-    # mayúsculas y "scrapy.http.Request" (una clase) parecería la carpeta scrapy/http/request.
+    # mayúsculas y "paquete.modulo.Clase" (una clase) parecería el archivo paquete/modulo/clase.py.
     base = modulo.replace(".", "/")
     fuentes = codigo.listar_fuentes(repo)
     for ruta in (base + ".py", base + "/__init__.py"):
@@ -280,7 +281,7 @@ def reordenar_con_llm(repo: Path, candidatos: list, salida: str, tests_codigo: l
         salida=ejecutor.recortar(salida, MAX_CHARS_SALIDA),
         tests=ejecutor.recortar(tests_txt, MAX_CHARS_TEST),
         candidatos="\n\n".join(bloques_txt), k=min(5, len(bloques_txt)))
-    respuesta = llm.generar_json(prompt, etiqueta="localizador")
+    respuesta = llm.generar_json(prompt, etiqueta="localizador", plazo=PLAZO_LLM)
     if not isinstance(respuesta, dict) or not isinstance(respuesta.get("ranking"), list):
         print("[localizador] el LLM no entregó un ranking válido; se usa el orden heurístico")
         return candidatos

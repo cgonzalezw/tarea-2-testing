@@ -64,8 +64,15 @@ def _texto(respuesta):
         return None
 
 
-def generar(prompt: str, json_mode: bool = False, temperatura: float = 0.2, etiqueta: str = ""):
-    """Envía `prompt` al modelo y devuelve el texto de la respuesta, o None si no fue posible."""
+def generar(prompt: str, json_mode: bool = False, temperatura: float = 0.2, etiqueta: str = "",
+            plazo: float = None):
+    """Envía `prompt` al modelo y devuelve el texto de la respuesta, o None si no fue posible.
+    `plazo`: segundos máximos para esta llamada, contando reintentos y esperas."""
+    fin = tiempo.transcurrido() + plazo if plazo is not None else None
+
+    def disponible() -> float:
+        return tiempo.restante() if fin is None else min(tiempo.restante(), fin - tiempo.transcurrido())
+
     try:
         from google.genai import types
         cliente = _obtener_cliente()
@@ -74,10 +81,10 @@ def generar(prompt: str, json_mode: bool = False, temperatura: float = 0.2, etiq
         return None
 
     for intento in range(1, MAX_INTENTOS + 1):
-        if not tiempo.alcanza(MARGEN):
+        if disponible() < MARGEN:
             print(f"[llm] {etiqueta}: sin tiempo para llamar al modelo")
             return None
-        timeout = min(TIMEOUT_LLAMADA, tiempo.restante() - 1)
+        timeout = min(TIMEOUT_LLAMADA, disponible() - 1)
         config = types.GenerateContentConfig(
             temperature=temperatura,
             response_mime_type="application/json" if json_mode else None,
@@ -95,7 +102,7 @@ def generar(prompt: str, json_mode: bool = False, temperatura: float = 0.2, etiq
             espera += random.uniform(0, 1)
             print(f"[llm] {etiqueta}: intento {intento} falló ({codigo or type(e).__name__}); "
                   f"reintento en {espera:.1f}s")
-            if intento == MAX_INTENTOS or not tiempo.alcanza(espera + MARGEN):
+            if intento == MAX_INTENTOS or disponible() < espera + MARGEN:
                 return None
             time.sleep(espera)
             continue

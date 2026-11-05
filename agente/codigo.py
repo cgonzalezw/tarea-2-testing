@@ -116,6 +116,6 @@ def invalidar_cache() -> None:
 
 
 def palabras(nombre: str) -> set:
-    """Divide un identificador en palabras: 'BracketTracker.mark_x' -> {bracket, tracker, mark, x}."""
+    """Divide un identificador en palabras: 'MiClase.mi_metodo' -> {mi, clase, metodo}."""
     partes = re.findall(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+", nombre)
     return {p.lower() for p in partes}
