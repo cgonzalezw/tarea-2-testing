@@ -49,11 +49,7 @@ Primero explica la causa en un máximo de 5 líneas. Después escribe uno o más
 este formato:
 
 ARCHIVO: ruta/relativa/al/archivo.py
-<<<<<<< BUSCAR
 líneas actuales del archivo
-=======
-líneas que las reemplazan
->>>>>>> REEMPLAZAR
 
 Reglas:
 - BUSCAR debe ser una copia exacta de líneas consecutivas del archivo, con su sangría y SIN los \
